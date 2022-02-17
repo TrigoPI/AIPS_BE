@@ -12,9 +12,16 @@
 typedef int SERVER;
 typedef int CLIENT;
 typedef int SOCKET;
+typedef int BUFFER;
 typedef struct sockaddr_in SOCKADDR_IN;
 typedef struct sockaddr SOCKADDR;
 typedef struct in_addr IN_ADDR;
+
+typedef struct 
+{
+    int size;
+    char data[];
+} Buffer;
 
 typedef struct 
 {
@@ -43,7 +50,7 @@ void cho7_useServer(SERVER server);
 void cho7_useClient(CLIENT client);
 void cho7_closeServer();
 void cho7_closeClient();
-void cho7_clientData(CLIENT client, struct hostent* hostinfo, int port, int family);
+void cho7_clientData(CLIENT client, struct hostent* hostinfo, int port, int family, int type);
 void cho7_serverData(SERVER server, int port, int family, int type, int protocole);
 
 int cho7_serverShouldClose();

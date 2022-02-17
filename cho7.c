@@ -47,7 +47,6 @@ int cho7_recvFrom(char buffer[], int size)
     assert(currentServer != NULL);
 
     int fromSize = sizeof(currentClient->sin);
-
     int result = recvfrom(currentServer->sock, buffer, size, 0, (SOCKADDR*)&currentClient->sin, &fromSize);
 
     return result;
@@ -56,11 +55,9 @@ int cho7_recvFrom(char buffer[], int size)
 int cho7_sendTo(char buffer[], int size)
 {
     assert(currentClient != NULL);
-    assert(currentServer != NULL);
 
-    int fromSize = sizeof(currentServer->sin);
-
-    int result = sendto(currentClient->sock, buffer, size, 0, (SOCKADDR*)&currentServer->sin, fromSize);
+    int toSize = sizeof(currentClient->sin);
+    int result = sendto(currentClient->sock, buffer, size, 0, (SOCKADDR*)&currentClient->sin, toSize);
 
     return result;
 }
@@ -115,13 +112,16 @@ void cho7_useClient(CLIENT client)
     }
 }
 
-void cho7_clientData(CLIENT client, struct hostent* hostinfo, int port, int family)
+void cho7_clientData(CLIENT client, struct hostent* hostinfo, int port, int family, int type)
 {
     ClientData* clt = allClient[client];
-
-    clt->sin.sin_addr = *(IN_ADDR*)hostinfo->h_addr;
+    
+    clt->sock = socket(family, type, 0);
+    clt->sin.sin_addr = *(IN_ADDR *) hostinfo->h_addr;
     clt->sin.sin_port = htons(port);
     clt->sin.sin_family = family;
+
+    bind(clt->sock, (SOCKADDR*)&clt->sin, sizeof(clt->sin));
 }
 
 void cho7_serverData(SERVER server, int port, int family, int type, int protocole)
