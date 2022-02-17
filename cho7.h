@@ -7,6 +7,7 @@
 
 #define MAX_SERVER 100
 #define MAX_CLIENT 100
+#define MAX_BUFFER 100
 #define CLOSE -1
 
 typedef int SERVER;
@@ -20,7 +21,7 @@ typedef struct in_addr IN_ADDR;
 typedef struct 
 {
     int size;
-    char data[];
+    char* data;
 } Buffer;
 
 typedef struct 
@@ -36,6 +37,8 @@ typedef struct
     SOCKADDR_IN sin;
 } ClientData;
 
+Buffer* allBuffer[MAX_BUFFER];
+
 ServerData* allServer[MAX_SERVER];
 ServerData* currentServer;
 
@@ -44,20 +47,23 @@ ClientData* currentClient;
 
 CLIENT currentClientID;
 SERVER currentServerID;
+BUFFER currentBufferID;
 
 void cho7_init();
-void cho7_useServer(SERVER server);
-void cho7_useClient(CLIENT client);
 void cho7_closeServer();
 void cho7_closeClient();
+void cho7_useServer(SERVER server);
+void cho7_useClient(CLIENT client);
 void cho7_clientData(CLIENT client, struct hostent* hostinfo, int port, int family, int type);
 void cho7_serverData(SERVER server, int port, int family, int type, int protocole);
+void cho7_bufferData(BUFFER buffer, char data[]);
 
 int cho7_serverShouldClose();
 int cho7_onConnect();
 
-int cho7_recvFrom(char buffer[], int size);
-int cho7_sendTo(char buffer[], int size);
+int cho7_recvFrom(BUFFER buffer);
+int cho7_sendTo(BUFFER buffer);
 
 SERVER cho7_createServer();
 CLIENT cho7_createClient();
+BUFFER cho7_createBuffer(int size);

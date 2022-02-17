@@ -34,6 +34,17 @@ CLIENT cho7_createClient()
     return id;
 }
 
+BUFFER cho7_createBuffer(int size)
+{
+    BUFFER id = currentBufferID;
+    allBuffer[id] = (Buffer*)malloc(sizeof(Buffer));
+    allBuffer[id]->data = (char*)malloc(sizeof(char)*size); 
+
+    ++currentBufferID;
+
+    return id;
+}
+
 int cho7_serverShouldClose()
 {
     assert(currentServer != NULL);
@@ -41,23 +52,25 @@ int cho7_serverShouldClose()
     return currentServer->running;
 }
 
-int cho7_recvFrom(char buffer[], int size)
+int cho7_recvFrom(BUFFER buffer)
 {
     assert(currentClient != NULL);
     assert(currentServer != NULL);
 
+    Buffer* buf = allBuffer[buffer];
     int fromSize = sizeof(currentClient->sin);
-    int result = recvfrom(currentServer->sock, buffer, size, 0, (SOCKADDR*)&currentClient->sin, &fromSize);
+    int result = recvfrom(currentServer->sock, buf->data, buf->size, 0, (SOCKADDR*)&currentClient->sin, &fromSize);
 
     return result;
 }
 
-int cho7_sendTo(char buffer[], int size)
+int cho7_sendTo(BUFFER buffer)
 {
     assert(currentClient != NULL);
 
+    Buffer* buf = allBuffer[buffer];
     int toSize = sizeof(currentClient->sin);
-    int result = sendto(currentClient->sock, buffer, size, 0, (SOCKADDR*)&currentClient->sin, toSize);
+    int result = sendto(currentClient->sock, buf->data, buf->size, 0, (SOCKADDR*)&currentClient->sin, toSize);
 
     return result;
 }
@@ -134,4 +147,10 @@ void cho7_serverData(SERVER server, int port, int family, int type, int protocol
     srv->sock = socket(family, type, protocole);
 
     bind(srv->sock, (SOCKADDR*)&srv->sin, sizeof(srv->sin));
+}
+
+void cho7_bufferData(BUFFER buffer, char data[])
+{
+    Buffer* buf = allBuffer[buffer];
+    strcpy(buf->data, data);
 }

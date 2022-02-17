@@ -91,7 +91,7 @@ void main (int argc, char **argv)
 
 		printf("send\n");
 
-		int n = cho7_sendTo("test", 5);
+		int n = cho7_sendTo("test");
 
 		if (n)
 		{
@@ -114,7 +114,9 @@ void main (int argc, char **argv)
 			
 			SERVER srv = cho7_createServer();
 			CLIENT clt = cho7_createClient();
+			BUFFER buffer = cho7_createBuffer(1024);
 
+			cho7_bufferData(buffer, "salut");
 			cho7_serverData(srv, port, AF_INET, SOCK_DGRAM, 0);
 
 			cho7_useServer(srv);
@@ -122,12 +124,12 @@ void main (int argc, char **argv)
 
 			while (cho7_serverShouldClose())
 			{
-				int n = cho7_recvFrom(buffer, 1023);
+				int n = cho7_recvFrom(buffer);
 
 				if (n)
 				{
 					buffer[n] = '\0';
-					printf("%s\n", buffer);
+					printf("%s\n", allBuffer[buffer]->);
 				}
 				else 
 				{
