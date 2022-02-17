@@ -43,14 +43,14 @@ void cho7_useServer(SERVER server);
 void cho7_useClient(CLIENT client);
 void cho7_closeServer();
 void cho7_closeClient();
-void cho7_setClientInfo(struct hostent* hostinfo, int port, int family);
-void cho7_serServerInfo(const char* ip, int port, int family, int type, int protocole);
+void cho7_clientData(CLIENT client, struct hostent* hostinfo, int port, int family);
+void cho7_serverData(SERVER server, int port, int family, int type, int protocole);
 
 int cho7_serverShouldClose();
 int cho7_onConnect();
 
 int cho7_recvFrom(char buffer[], int size);
-
+int cho7_sendTo(char buffer[], int size);
 
 SERVER cho7_createServer();
 CLIENT cho7_createClient();

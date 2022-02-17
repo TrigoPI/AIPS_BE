@@ -84,11 +84,24 @@ void main (int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 
+		SERVER srv = cho7_createServer();
 		CLIENT clt = cho7_createClient();
+
+		cho7_clientData(clt, hostinfo, port, AF_INET);
+
 		cho7_useClient(clt);
-		cho7_setClientInfo(hostinfo, port, AF_INET);
+		cho7_useServer(srv);
 
+		int n = cho7_sendTo("test", 4);
 
+		if (n)
+		{
+			printf("super");
+		}
+		else 
+		{
+			printf("erreur");
+		}
 	}
 	else
 	{
@@ -103,19 +116,25 @@ void main (int argc, char **argv)
 			SERVER srv = cho7_createServer();
 			CLIENT clt = cho7_createClient();
 
+			cho7_serverData(srv, port, AF_INET, SOCK_DGRAM, 0);
+
 			cho7_useServer(srv);
 			cho7_useClient(clt);
 
-			// while (cho7_serverShouldClose())
-			// {
-			// 	int n = cho7_recvFrom(buffer, 1023);
+			while (cho7_serverShouldClose())
+			{
+				int n = cho7_recvFrom(buffer, 1023);
 
-			// 	if (n)
-			// 	{
-			// 		buffer[n] = '\0';
-			// 		printf("%s\n", buffer);
-			// 	}
-			// }
+				if (n)
+				{
+					buffer[n] = '\0';
+					printf("%s\n", buffer);
+				}
+				else 
+				{
+					printf("ERREUR");
+				}
+			}
 		}
 	}
 
