@@ -120,21 +120,6 @@ int main (int argc, char **argv)
 
 		if (tcp == 1)
 		{	
-			// printf("client TCP\n");
-
-			// HOSTENT hostinfo = gethostbyname("localhost");
-
-			// CHO7 clt = cho7_createClient();
-			// BUFFER buffer = cho7_createBuffer(1024);
-
-			// cho7_clientData(clt, hostinfo, port, AF_INET, SOCK_STREAM);
-			// cho7_bufferData(buffer, "test");
-
-			// cho7_useClient(clt);
-
-			// cho7_connect();
-			// cho7_send(buffer);
-
 			Client client = tsock_createTCPClient(host, port, bufferSize);
 			
 			printf("Client : lg_mesg_emis=%d, port=%d, nb_envois=%d, TP=tcp, dest=%s\n", bufferSize, port, nb_message, host);
