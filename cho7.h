@@ -1,3 +1,6 @@
+#ifndef CHO7_H
+#define CHO7_H
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -10,13 +13,13 @@
 #define MAX_BUFFER 100
 #define CLOSE -1
 
-typedef int SERVER;
-typedef int CLIENT;
+typedef int CHO7;
 typedef int SOCKET;
 typedef int BUFFER;
 typedef struct sockaddr_in SOCKADDR_IN;
 typedef struct sockaddr SOCKADDR;
 typedef struct in_addr IN_ADDR;
+typedef struct hostent* HOSTENT;
 
 typedef struct 
 {
@@ -29,41 +32,38 @@ typedef struct
     int running;
     SOCKET sock;
     SOCKADDR_IN sin;
-} ServerData;
+} Cho7;
 
-typedef struct 
-{
-    SOCKET sock;
-    SOCKADDR_IN sin;
-} ClientData;
+static Buffer* allBuffer[MAX_BUFFER];
+static   Cho7* allClient[MAX_CLIENT];
+static   Cho7* allServer[MAX_SERVER];
 
-Buffer* allBuffer[MAX_BUFFER];
+static Cho7* currentServer = NULL;
+static Cho7* currentClient = NULL;
 
-ServerData* allServer[MAX_SERVER];
-ServerData* currentServer;
+static BUFFER currentBufferID = 0;
+static CHO7 currentClientID   = 0;
+static CHO7 currentServerID   = 0;
 
-ClientData* allClient[MAX_CLIENT];
-ClientData* currentClient;
 
-CLIENT currentClientID;
-SERVER currentServerID;
-BUFFER currentBufferID;
-
-void cho7_init();
 void cho7_closeServer();
 void cho7_closeClient();
-void cho7_useServer(SERVER server);
-void cho7_useClient(CLIENT client);
-void cho7_clientData(CLIENT client, struct hostent* hostinfo, int port, int family, int type);
-void cho7_serverData(SERVER server, int port, int family, int type, int protocole);
+void cho7_useServer(CHO7 server);
+void cho7_useClient(CHO7 client);
+void cho7_clientData(CHO7 client, struct hostent* hostinfo, int port, int family, int type);
+void cho7_serverData(CHO7 server, int port, int family, int type, int protocole);
 void cho7_bufferData(BUFFER buffer, char data[]);
 
 int cho7_serverShouldClose();
 int cho7_onConnect();
-
 int cho7_recvFrom(BUFFER buffer);
 int cho7_sendTo(BUFFER buffer);
+int cho7_getBufferSize(BUFFER buffer);
 
-SERVER cho7_createServer();
-CLIENT cho7_createClient();
+const char* cho7_getBufferData(BUFFER buffer);
+
+CHO7 cho7_createServer();
+CHO7 cho7_createClient();
 BUFFER cho7_createBuffer(int size);
+
+#endif

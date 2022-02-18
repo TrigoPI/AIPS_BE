@@ -1,21 +1,14 @@
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include "cho7.h"
 
-void cho7_init()
+CHO7 cho7_createServer()
 {
-    currentClientID = 0;
-    currentServerID = 0;
-
-    currentServer = NULL;
-    currentClient = NULL; 
-}
-
-SERVER cho7_createServer()
-{
-    SERVER id = currentServerID;
-    ServerData* server = (ServerData*)malloc(sizeof(ServerData));
+    CHO7 id = currentServerID;
+    Cho7* server = (Cho7*)malloc(sizeof(Cho7));
+    
     server->running = 0;
     allServer[id] = server;
 
@@ -24,10 +17,12 @@ SERVER cho7_createServer()
     return id;
 }
 
-CLIENT cho7_createClient()
+CHO7 cho7_createClient()
 {
-    CLIENT id = currentClientID;
-    allClient[id] = (ClientData*)malloc(sizeof(ClientData));
+    CHO7 id = currentClientID;
+    Cho7* client = (Cho7*)malloc(sizeof(Cho7));
+    
+    allClient[id] = client;
 
     ++currentClientID;
 
@@ -37,8 +32,12 @@ CLIENT cho7_createClient()
 BUFFER cho7_createBuffer(int size)
 {
     BUFFER id = currentBufferID;
-    allBuffer[id] = (Buffer*)malloc(sizeof(Buffer));
-    allBuffer[id]->data = (char*)malloc(sizeof(char)*size); 
+    Buffer* buffer = (Buffer*)malloc(sizeof(Buffer));
+
+    buffer->data = (char*)malloc(sizeof(char)*size); 
+    buffer->size = size;
+
+    allBuffer[id] = buffer;
 
     ++currentBufferID;
 
@@ -58,6 +57,7 @@ int cho7_recvFrom(BUFFER buffer)
     assert(currentServer != NULL);
 
     Buffer* buf = allBuffer[buffer];
+
     int fromSize = sizeof(currentClient->sin);
     int result = recvfrom(currentServer->sock, buf->data, buf->size, 0, (SOCKADDR*)&currentClient->sin, &fromSize);
 
@@ -75,16 +75,32 @@ int cho7_sendTo(BUFFER buffer)
     return result;
 }
 
+int cho7_getBufferSize(BUFFER buffer)
+{
+    return allBuffer[buffer]->size;
+}
+
+const char* cho7_getBufferData(BUFFER buffer)
+{
+    return allBuffer[buffer]->data;
+}
+
 void cho7_closeServer()
 {
     assert(currentServer != NULL);
 
     currentServer->running = 0;
     close(currentServer->sock);
-    currentServer = NULL;
 }
 
-void cho7_useServer(SERVER server)
+void cho7_closeClient()
+{
+    assert(currentClient != NULL);
+
+    close(currentClient->sock);
+}
+
+void cho7_useServer(CHO7 server)
 {
     if (currentServer == NULL)
     {
@@ -106,7 +122,7 @@ void cho7_useServer(SERVER server)
     }
 }
 
-void cho7_useClient(CLIENT client)
+void cho7_useClient(CHO7 client)
 {
     if (currentClient == NULL)
     {
@@ -125,9 +141,9 @@ void cho7_useClient(CLIENT client)
     }
 }
 
-void cho7_clientData(CLIENT client, struct hostent* hostinfo, int port, int family, int type)
+void cho7_clientData(CHO7 client, struct hostent* hostinfo, int port, int family, int type)
 {
-    ClientData* clt = allClient[client];
+    Cho7* clt = allClient[client];
     
     clt->sock = socket(family, type, 0);
     clt->sin.sin_addr = *(IN_ADDR *) hostinfo->h_addr;
@@ -137,9 +153,9 @@ void cho7_clientData(CLIENT client, struct hostent* hostinfo, int port, int fami
     bind(clt->sock, (SOCKADDR*)&clt->sin, sizeof(clt->sin));
 }
 
-void cho7_serverData(SERVER server, int port, int family, int type, int protocole)
+void cho7_serverData(CHO7 server, int port, int family, int type, int protocole)
 {
-    ServerData* srv = allServer[server];
+    Cho7* srv = allServer[server];
 
     srv->sin.sin_addr.s_addr = INADDR_ANY;
     srv->sin.sin_family = family;

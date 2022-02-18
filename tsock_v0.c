@@ -1,27 +1,24 @@
-/* librairie standard ... */
 #include <stdlib.h>
-/* pour getopt */
 #include <unistd.h>
-/* pour les entrées/sorties */
 #include <stdio.h>
-/* pour la gestion des erreurs */
 #include <errno.h>
-
 #include <string.h>
 
-#include "cho7.h"
+#include "tsock.h"
 
-void main (int argc, char **argv)
+int main (int argc, char **argv)
 {
 	int c;
 	extern char *optarg;
 	extern int optind;
 	
-	int nb_message = -1; /* Nb de messages à envoyer ou à recevoir, par défaut : 10 en émission, infini en réception */
-	int source = -1 ; /* 0=puits, 1=source */
-	
+	int bufferSize = -1;
+	int nb_message = -1;
+	int source = -1; 
+	int puit = -1;
+
 	int udp = -1;
-	int tpc = -1;
+	int tcp = -1;
 
 	int port = -1;
 
@@ -32,26 +29,47 @@ void main (int argc, char **argv)
 	// t : tcp
 	// n : nb messages
 
-	while ((c = getopt(argc, argv, "pusn:")) != -1) {
+	while ((c = getopt(argc, argv, "pusn:l:")) != -1) {
 		switch (c) {
 		case 'p':
-			if (source == 1) {
+			if (source == 1) 
+			{
 				printf("usage: cmd [-p|-s][-n ##]\n");
 				exit(1);
 			}
-			source = 0;
+			else
+			{
+				puit = 1;
+			}
+
 			break;
 		
-		case 'u':
-			udp = 1;
-			break;
-
 		case 's':
-			if (source == 0) {
+			if (puit == 1) 
+			{
 				printf("usage: cmd [-p|-s][-n ##]\n");
 				exit(1) ;
 			}
-			source = 1;
+			else 
+			{
+				source = 1;
+			}
+
+			break;
+
+		case 'u':
+			if (tcp == 1)
+			{	
+				printf("erreur\n");
+				exit(1);
+			}
+
+			udp = 1;
+
+			break;
+
+		case 'l' :
+			bufferSize = atoi(optarg);
 			break;
 
 		case 'n':
@@ -64,93 +82,58 @@ void main (int argc, char **argv)
 		}
 	}
 
-	if (source == -1) {
+	if (puit == -1 && source == -1) 
+	{
 		printf("usage: cmd [-p|-s][-n ##]\n");
 		exit(1) ;
 	}
 
+	if (nb_message == -1) 
+	{
+		if (source == 1)
+		{
+			nb_message = 10;
+		}
+	} 
+
+	if (bufferSize == -1)
+	{
+		bufferSize = 30;
+	}
+
 	if (source == 1)
 	{
-		printf("on est dans le source\n");
-
 		port = atoi(argv[argc-1]);
 		strcpy(host, argv[argc-2]);
 
-		struct hostent* hostinfo = gethostbyname(host);
+		Client client = tsock_createUDPClient(host, port, bufferSize);
 
-		if (hostinfo == NULL)
-		{
-			printf("error");
-			exit(EXIT_FAILURE);
-		}
-
-		CLIENT clt = cho7_createClient();
-
-		cho7_clientData(clt, hostinfo, port, AF_INET, SOCK_DGRAM);
-		cho7_useClient(clt);
-
-		printf("send\n");
-
-		int n = cho7_sendTo("test");
-
-		if (n)
-		{
-			printf("super\n");
-		}
-		else 
-		{
-			printf("erreur\n");
-		}
+		printf("Client : lg_mesg_emis=%d, port=%d, nb_envois=%d, TP=udp, dest=%s\n", bufferSize, port, nb_message, host);
+		
+		tsock_sendUPDMessage(client, nb_message);
 	}
-	else
+
+	if (puit == 1)
 	{
-		port = atoi(argv[argc-1]);
+		if (udp == 1)
+		{	
 
-		printf("listenning on 0.0.0.0 %d\n", port);
+			port = atoi(argv[argc-1]);
+			Server server = tsock_createUDPServer(port, bufferSize);
 
-		if (udp)
-		{
-			char buffer[1024];
-			
-			SERVER srv = cho7_createServer();
-			CLIENT clt = cho7_createClient();
-			BUFFER buffer = cho7_createBuffer(1024);
-
-			cho7_bufferData(buffer, "salut");
-			cho7_serverData(srv, port, AF_INET, SOCK_DGRAM, 0);
-
-			cho7_useServer(srv);
-			cho7_useClient(clt);
-
-			while (cho7_serverShouldClose())
+			if (nb_message <= 0)
 			{
-				int n = cho7_recvFrom(buffer);
-
-				if (n)
-				{
-					buffer[n] = '\0';
-					printf("%s\n", allBuffer[buffer]->);
-				}
-				else 
-				{
-					printf("ERREUR");
-				}
+				printf("Server : g_mesg_lu=%d, listenning=0.0.0.0, port=%d, nb_receptions=infini, TP=udp\n", bufferSize, port);
+				tsock_runUPDServer(server, nb_message);
+			}
+			else 
+			{
+				printf("Server : g_mesg_lu=%d, listenning=0.0.0.0, port=%d, nb_receptions=%d, TP=udp\n", bufferSize, port, nb_message);
+				tsock_runUPDServer(server, nb_message);
 			}
 		}
 	}
 
-	if (nb_message != -1) {
-		if (source == 1)
-			printf("nb de tampons à envoyer : %d\n", nb_message);
-		else
-			printf("nb de tampons à recevoir : %d\n", nb_message);
-	} else {
-		if (source == 1) {
-			nb_message = 10 ;
-			printf("nb de tampons à envoyer = 10 par défaut\n");
-		} else
-		printf("nb de tampons à envoyer = infini\n");
-
-	}
+	return 0;
 }
 
