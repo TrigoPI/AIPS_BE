@@ -1,9 +1,12 @@
+#include <netdb.h>
 #include <stdlib.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
 
+#include "cho7.h"
 #include "tsock.h"
 
 int main (int argc, char **argv)
@@ -29,7 +32,7 @@ int main (int argc, char **argv)
 	// t : tcp
 	// n : nb messages
 
-	while ((c = getopt(argc, argv, "pusn:l:")) != -1) {
+	while ((c = getopt(argc, argv, "ptusn:l:")) != -1) {
 		switch (c) {
 		case 'p':
 			if (source == 1) 
@@ -55,6 +58,15 @@ int main (int argc, char **argv)
 				source = 1;
 			}
 
+			break;
+
+		case 't':
+			if (udp == 1)
+			{
+				printf("erreur\n");
+				exit(1);
+			}
+			tcp  = 1;
 			break;
 
 		case 'u':
@@ -102,35 +114,79 @@ int main (int argc, char **argv)
 	}
 
 	if (source == 1)
-	{
+	{	
 		port = atoi(argv[argc-1]);
 		strcpy(host, argv[argc-2]);
 
-		Client client = tsock_createUDPClient(host, port, bufferSize);
+		if (tcp == 1)
+		{	
+			// printf("client TCP\n");
 
-		printf("Client : lg_mesg_emis=%d, port=%d, nb_envois=%d, TP=udp, dest=%s\n", bufferSize, port, nb_message, host);
+			// HOSTENT hostinfo = gethostbyname("localhost");
+
+			// CHO7 clt = cho7_createClient();
+			// BUFFER buffer = cho7_createBuffer(1024);
+
+			// cho7_clientData(clt, hostinfo, port, AF_INET, SOCK_STREAM);
+			// cho7_bufferData(buffer, "test");
+
+			// cho7_useClient(clt);
+
+			// cho7_connect();
+			// cho7_send(buffer);
+
+			Client client = tsock_createTCPClient(host, port, bufferSize);
+			
+			printf("Client : lg_mesg_emis=%d, port=%d, nb_envois=%d, TP=tcp, dest=%s\n", bufferSize, port, nb_message, host);
 		
-		tsock_sendUPDMessage(client, nb_message);
+			tsock_sendTCPMessage(client, nb_message);
+		}
+
+		if (udp == 1)
+		{
+			Client client = tsock_createUDPClient(host, port, bufferSize);
+
+			printf("Client : lg_mesg_emis=%d, port=%d, nb_envois=%d, TP=udp, dest=%s\n", bufferSize, port, nb_message, host);
+			
+			tsock_sendUPDMessage(client, nb_message);
+		}
 	}
 
 	if (puit == 1)
 	{
+		port = atoi(argv[argc-1]);
+
+		if (tcp == 1)
+		{
+			Server server = tsock_createTCPServer(port, bufferSize);
+
+			if (nb_message <= 0)
+			{
+				printf("Server : g_mesg_lu=%d, listenning=0.0.0.0, port=%d, nb_receptions=infini, TP=tcp\n", bufferSize, port);
+			}
+			else 
+			{
+				printf("Server : g_mesg_lu=%d, listenning=0.0.0.0, port=%d, nb_receptions=%d, TP=tcp\n", bufferSize, port, nb_message);
+			}
+
+			tsock_runTCPServer(server, nb_message);
+		}
+
 		if (udp == 1)
 		{	
 
-			port = atoi(argv[argc-1]);
 			Server server = tsock_createUDPServer(port, bufferSize);
 
 			if (nb_message <= 0)
 			{
 				printf("Server : g_mesg_lu=%d, listenning=0.0.0.0, port=%d, nb_receptions=infini, TP=udp\n", bufferSize, port);
-				tsock_runUPDServer(server, nb_message);
 			}
 			else 
 			{
 				printf("Server : g_mesg_lu=%d, listenning=0.0.0.0, port=%d, nb_receptions=%d, TP=udp\n", bufferSize, port, nb_message);
-				tsock_runUPDServer(server, nb_message);
 			}
+			
+			tsock_runUPDServer(server, nb_message);
 		}
 	}
 

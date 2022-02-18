@@ -11,6 +11,8 @@
 #define MAX_SERVER 100
 #define MAX_CLIENT 100
 #define MAX_BUFFER 100
+#define TCP SOCK_STREAM
+#define UDP SOCK_DGRAM
 #define CLOSE -1
 
 typedef int CHO7;
@@ -30,6 +32,7 @@ typedef struct
 typedef struct 
 {
     int running;
+    int type;
     SOCKET sock;
     SOCKADDR_IN sin;
 } Cho7;
@@ -48,6 +51,9 @@ static CHO7 currentServerID   = 0;
 
 void cho7_closeServer();
 void cho7_closeClient();
+void cho7_accept();
+void cho7_connect();
+void cho7_listen(int max);
 void cho7_useServer(CHO7 server);
 void cho7_useClient(CHO7 client);
 void cho7_clientData(CHO7 client, struct hostent* hostinfo, int port, int family, int type);
@@ -55,9 +61,10 @@ void cho7_serverData(CHO7 server, int port, int family, int type, int protocole)
 void cho7_bufferData(BUFFER buffer, char data[]);
 
 int cho7_serverShouldClose();
-int cho7_onConnect();
 int cho7_recvFrom(BUFFER buffer);
+int cho7_recv(BUFFER buffer);
 int cho7_sendTo(BUFFER buffer);
+int cho7_send(BUFFER buffer);
 int cho7_getBufferSize(BUFFER buffer);
 
 const char* cho7_getBufferData(BUFFER buffer);
